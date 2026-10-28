@@ -17,7 +17,9 @@ const adminSessionDuration = 12 * 60 * 60 * 1000;
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8'
+  '.js': 'text/javascript; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8'
 };
 
 async function readJsonBody(request, limit = 4096) {
@@ -182,7 +184,7 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  if (request.method !== 'GET' || !['/', '/index.html', '/thanks.html', '/styles.css', '/app.js'].includes(url.pathname)) {
+  if (request.method !== 'GET' || !['/', '/index.html', '/thanks.html', '/styles.css', '/app.js', '/robots.txt', '/sitemap.xml'].includes(url.pathname)) {
     response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     response.end('Not found');
     return;
