@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f5ef">
+    <meta name="description" content="A tidy collection of useful everyday tools. Five free tools, with more for £1 a month.">
+    <title>QuidTools — small tools, done well</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="QuidTools home">
+        <span class="brand-mark" aria-hidden="true">q.</span>
+        <span>quidtools</span>
+      </a>
+      <div class="topbar-right">
+        <a class="price-link" href="#membership">Plus <span>£1 / month</span></a>
+        <span class="member-status" id="member-status">FREE</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-dot"></span> YOUR EVERYDAY TOOLKIT</p>
+          <h1 id="page-title">Small tools.<br><span>Properly useful.</span></h1>
+        </div>
+        <p class="intro-note">Five handy tools, ready when you are.<br>No account needed to get started.</p>
+      </section>
+
+      <section class="workspace" aria-label="Tool workspace">
+        <nav class="tool-nav" aria-label="Tools">
+          <p class="nav-heading">FREE TOOLS <span>05</span></p>
+          <div id="free-tools" class="tool-list"></div>
+          <p class="nav-heading premium-heading">PLUS TOOLS <span>05</span></p>
+          <div id="plus-tools" class="tool-list"></div>
+          <a class="nav-upgrade" href="#membership"><span class="upgrade-spark">+</span><span>Unlock every tool<br><small>£1 / month</small></span><span class="nav-arrow">↗</span></a>
+        </nav>
+
+        <section class="tool-stage" aria-live="polite">
+          <div class="stage-heading">
+            <div>
+              <p class="eyebrow" id="tool-category">FREE TOOL</p>
+              <h2 id="tool-title">Word counter</h2>
+            </div>
+            <span class="tool-index" id="tool-index">01 / 05</span>
+          </div>
+          <div id="tool-content" class="tool-content"></div>
+        </section>
+
+        <aside class="side-rail" aria-label="Membership">
+          <div class="membership-panel" id="membership">
+            <div class="panel-topline"><span>Q+</span><span>THE FULL KIT</span></div>
+            <h2>More room<br>to get things done.</h2>
+            <p>Five extra tools. No ad placements. Cancel anytime through PayPal.</p>
+            <div class="price"><strong>£1</strong><span>/ month</span></div>
+            <div id="paypal-button-container" class="paypal-button-container"></div>
+            <p class="payment-note">£1 per month. Cancel anytime in your PayPal account.</p>
+            <button class="admin-entry" id="admin-entry" type="button" hidden>Admin sign in</button>
+            <p class="checkout-status" id="checkout-status" role="status" aria-live="polite"></p>
+            <ul class="plus-includes">
+              <li><span>+</span> 5 extra tools</li>
+              <li><span>+</span> No ad placements</li>
+              <li><span>+</span> Cancel anytime</li>
+            </ul>
+          </div>
+          <div class="sponsor-slot" id="sponsor-slot">
+            <span class="sponsor-label">SPONSORED SPACE</span>
+            <p>A small spot for a good thing from a good person.</p>
+            <span class="sponsor-dash"></span>
+          </div>
+          <p class="fine-print">£1/month subscription. PayPal handles checkout securely.</p>
+        </aside>
+      </section>
+
+      <footer class="footer">
+        <span>QUIDTOOLS <i>·</i> MADE FOR THE LITTLE TASKS</span>
+        <span>Payments handled securely by PayPal</span>
+      </footer>
+    </main>
+    <dialog class="admin-dialog" id="admin-dialog" aria-labelledby="admin-dialog-title">
+      <form id="admin-form">
+        <div class="dialog-heading">
+          <div><p class="eyebrow">OWNER ACCESS</p><h2 id="admin-dialog-title">Admin sign in</h2></div>
+          <button class="dialog-close" id="admin-dialog-close" type="button" aria-label="Close dialog">×</button>
+        </div>
+        <label class="field-label" for="admin-password">ADMIN PASSWORD</label>
+        <input class="text-input" id="admin-password" type="password" autocomplete="current-password" required>
+        <p class="admin-error" id="admin-error" role="alert"></p>
+        <button class="action-button" type="submit">Sign in</button>
+      </form>
+    </dialog>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html
