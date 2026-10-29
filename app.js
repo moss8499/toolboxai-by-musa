@@ -419,7 +419,7 @@ function renderHostedButton() {
   form.action = 'https://www.paypal.com/cgi-bin/webscr';
   form.method = 'post';
   form.target = '_top';
-  for (const [name, value] of [['cmd', '_s-xclick'], ['hosted_button_id', 'QM472XHY23HP6'], ['currency_code', 'GBP']]) {
+  for (const [name, value] of [['cmd', '_s-xclick'], ['hosted_button_id', 'ERSVDDQC8TFEY'], ['currency_code', 'GBP']]) {
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = name;
