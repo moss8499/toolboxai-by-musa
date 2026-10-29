@@ -22,7 +22,6 @@ const status = document.querySelector('#checkout-status');
 let activeTool = 'words';
 let hasPlus = false;
 let isAdmin = false;
-let paypalConfig;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -389,56 +388,5 @@ document.querySelector('#admin-form').addEventListener('submit', async (event) =
   }
 });
 
-async function loadPayPal() {
-  try {
-    paypalConfig = await fetch('/api/config').then((response) => response.json());
-  } catch {
-    paypalConfig = {};
-  }
-  if (!paypalConfig.paypalConfigured) return;
-  const sdkUrl = new URL('https://www.paypal.com/sdk/js');
-  sdkUrl.search = new URLSearchParams({
-    'client-id': paypalConfig.paypalClientId,
-    currency: 'GBP',
-    vault: 'true',
-    intent: 'subscription'
-  });
-  const sdkScript = document.createElement('script');
-  sdkScript.src = sdkUrl;
-  sdkScript.onload = renderPayPalButtons;
-  sdkScript.onerror = () => setStatus('PayPal checkout could not be loaded. Please try again later.');
-  document.head.append(sdkScript);
-}
-
-function renderPayPalButtons() {
-  if (!window.paypal) {
-    setStatus('PayPal checkout could not be loaded. Please try again later.');
-    return;
-  }
-
-  window.paypal.Buttons({
-    style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe', height: 40 },
-    createSubscription: (_data, actions) => actions.subscription.create({ plan_id: paypalConfig.paypalPlanId }),
-    onApprove: async (data) => {
-      setStatus('Confirming your £1/month subscription...');
-      try {
-        const response = await fetch('/api/verify-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscriptionId: data.subscriptionID })
-        });
-        const result = await response.json();
-        if (!response.ok || !result.active) throw new Error(result.message || 'Subscription confirmation failed.');
-        localStorage.setItem('quidtools-subscription', data.subscriptionID);
-        window.location.assign('/thanks.html');
-      } catch (error) {
-        setStatus(error.message);
-      }
-    },
-    onError: () => setStatus('PayPal checkout could not be completed. Please try again.')
-  }).render('#paypal-button-container');
-}
-
 renderTool();
-loadPayPal();
 verifySavedSubscription();
