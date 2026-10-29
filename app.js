@@ -395,10 +395,7 @@ async function loadPayPal() {
   } catch {
     paypalConfig = {};
   }
-  if (!paypalConfig.paypalConfigured) {
-    renderHostedButton();
-    return;
-  }
+  if (!paypalConfig.paypalConfigured) return;
   const sdkUrl = new URL('https://www.paypal.com/sdk/js');
   sdkUrl.search = new URLSearchParams({
     'client-id': paypalConfig.paypalClientId,
@@ -411,28 +408,6 @@ async function loadPayPal() {
   sdkScript.onload = renderPayPalButtons;
   sdkScript.onerror = () => setStatus('PayPal checkout could not be loaded. Please try again later.');
   document.head.append(sdkScript);
-}
-
-// Stopgap until a REST plan ID exists; payments here do not unlock Plus automatically.
-function renderHostedButton() {
-  const form = document.createElement('form');
-  form.action = 'https://www.paypal.com/cgi-bin/webscr';
-  form.method = 'post';
-  form.target = '_top';
-  for (const [name, value] of [['cmd', '_s-xclick'], ['hosted_button_id', 'ERSVDDQC8TFEY'], ['currency_code', 'GBP']]) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    input.value = value;
-    form.append(input);
-  }
-  const button = document.createElement('input');
-  button.type = 'image';
-  button.src = 'https://www.paypalobjects.com/en_GB/i/btn/btn_subscribe_LG.gif';
-  button.name = 'submit';
-  button.alt = 'Subscribe with PayPal';
-  form.append(button);
-  document.querySelector('#paypal-button-container').append(form);
 }
 
 function renderPayPalButtons() {
