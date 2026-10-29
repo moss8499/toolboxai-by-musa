@@ -299,7 +299,7 @@ function setPremium(isPremium) {
   if (plusTools.some((tool) => tool.id === activeTool)) renderTool();
 }
 
-async function verifySavedSubscription() {
+async function loadAdminStatus() {
   let adminState = {};
   try {
     adminState = await fetch('/api/admin/status').then((response) => response.json());
@@ -310,29 +310,7 @@ async function verifySavedSubscription() {
   adminEntry.hidden = !adminState.configured;
   isAdmin = Boolean(adminState.authenticated);
   adminEntry.textContent = isAdmin ? 'Admin · sign out' : 'Admin sign in';
-  if (isAdmin) {
-    setPremium(true);
-    return;
-  }
-
-  const subscriptionId = localStorage.getItem('quidtools-subscription');
-  if (subscriptionId) {
-    try {
-      const response = await fetch('/api/verify-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscriptionId })
-      });
-      if (response.ok) {
-        setPremium(true);
-        return;
-      }
-      localStorage.removeItem('quidtools-subscription');
-    } catch {
-      setStatus('Could not refresh membership status.');
-    }
-  }
-
+  if (isAdmin) setPremium(true);
 }
 
 document.querySelector('#admin-entry').addEventListener('click', async () => {
@@ -349,7 +327,7 @@ document.querySelector('#admin-entry').addEventListener('click', async () => {
     isAdmin = false;
     document.querySelector('#admin-entry').textContent = 'Admin sign in';
     setPremium(false);
-    verifySavedSubscription();
+    loadAdminStatus();
     setStatus('Signed out of admin access.');
   } catch (error) {
     setStatus(error.message);
@@ -389,4 +367,4 @@ document.querySelector('#admin-form').addEventListener('submit', async (event) =
 });
 
 renderTool();
-verifySavedSubscription();
+loadAdminStatus();

@@ -6,10 +6,6 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const port = Number(process.env.PORT || 3000);
-const paypalClientId = process.env.PAYPAL_CLIENT_ID || 'BAAowBITZDtoAnQghlEOFvmc3cuqVv_W5aDbHeeiUgFW1-z4WogX9eOhnHoGUf6TJ9TFyTULcwK7Q_655k';
-const paypalBase = process.env.PAYPAL_ENV === 'sandbox'
-  ? 'https://api-m.sandbox.paypal.com'
-  : 'https://api-m.paypal.com';
 const adminPassword = process.env.ADMIN_PASSWORD || '';
 const adminSessions = new Map();
 const adminSessionDuration = 12 * 60 * 60 * 1000;
@@ -51,45 +47,6 @@ function sendJson(response, statusCode, payload, headers = {}) {
     ...headers
   });
   response.end(JSON.stringify(payload));
-}
-
-async function verifySubscription(subscriptionId) {
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-  const planId = process.env.PAYPAL_PLAN_ID;
-
-  if (!paypalClientId || !clientSecret || !planId) {
-    return { ok: false, status: 503, message: 'PayPal is not configured yet.' };
-  }
-
-  const credentials = Buffer.from(`${paypalClientId}:${clientSecret}`).toString('base64');
-  const tokenResponse = await fetch(`${paypalBase}/v1/oauth2/token`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: 'grant_type=client_credentials'
-  });
-
-  if (!tokenResponse.ok) {
-    return { ok: false, status: 502, message: 'Could not verify your PayPal subscription.' };
-  }
-
-  const { access_token: accessToken } = await tokenResponse.json();
-  const subscriptionResponse = await fetch(
-    `${paypalBase}/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-
-  if (!subscriptionResponse.ok) {
-    return { ok: false, status: 401, message: 'This subscription could not be verified.' };
-  }
-
-  const subscription = await subscriptionResponse.json();
-  const active = subscription.status === 'ACTIVE' && subscription.plan_id === planId;
-  return active
-    ? { ok: true }
-    : { ok: false, status: 401, message: 'This subscription is not active.' };
 }
 
 const server = createServer(async (request, response) => {
@@ -148,39 +105,6 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, { authenticated: false }, {
       'Set-Cookie': 'quidtools_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0'
     });
-    return;
-  }
-
-  if (url.pathname === '/api/config' && request.method === 'GET') {
-    sendJson(response, 200, {
-      paypalClientId: paypalClientId || null,
-      paypalPlanId: process.env.PAYPAL_PLAN_ID || null,
-      paypalConfigured: Boolean(paypalClientId && process.env.PAYPAL_CLIENT_SECRET && process.env.PAYPAL_PLAN_ID),
-      paypalEnvironment: process.env.PAYPAL_ENV === 'sandbox' ? 'sandbox' : 'live'
-    });
-    return;
-  }
-
-  if (url.pathname === '/api/verify-subscription' && request.method === 'POST') {
-    let subscriptionId;
-    try {
-      ({ subscriptionId } = await readJsonBody(request));
-    } catch {
-      sendJson(response, 400, { message: 'Invalid request.' });
-      return;
-    }
-
-    if (typeof subscriptionId !== 'string' || subscriptionId.length > 128) {
-      sendJson(response, 400, { message: 'Invalid subscription ID.' });
-      return;
-    }
-
-    try {
-      const result = await verifySubscription(subscriptionId);
-      sendJson(response, result.ok ? 200 : result.status, result.ok ? { active: true } : { message: result.message });
-    } catch {
-      sendJson(response, 502, { message: 'PayPal verification is temporarily unavailable.' });
-    }
     return;
   }
 
