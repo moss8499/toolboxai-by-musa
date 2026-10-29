@@ -6,7 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const port = Number(process.env.PORT || 3000);
-const adminPassword = process.env.ADMIN_PASSWORD || '';
+// Only the hash of the admin code is stored; ADMIN_PASSWORD overrides it.
+const adminCodeHash = process.env.ADMIN_PASSWORD
+  ? createHash('sha256').update(process.env.ADMIN_PASSWORD).digest()
+  : Buffer.from('2f4762a7e7844eefac1248f53e5a5f54eee905f8a750457c280d8c78bb7dcf8c', 'hex');
 const adminSessions = new Map();
 const adminSessionDuration = 12 * 60 * 60 * 1000;
 
@@ -56,18 +59,13 @@ const server = createServer(async (request, response) => {
 
   if (url.pathname === '/api/admin/status' && request.method === 'GET') {
     sendJson(response, 200, {
-      configured: Boolean(adminPassword),
+      configured: true,
       authenticated: Boolean(getAdminSessionId(request))
     });
     return;
   }
 
   if (url.pathname === '/api/admin/login' && request.method === 'POST') {
-    if (!adminPassword) {
-      sendJson(response, 503, { message: 'Admin access is not configured. Set ADMIN_PASSWORD and restart the server.' });
-      return;
-    }
-
     let password;
     try {
       ({ password } = await readJsonBody(request));
@@ -81,8 +79,7 @@ const server = createServer(async (request, response) => {
       return;
     }
     const submittedHash = createHash('sha256').update(password).digest();
-    const expectedHash = createHash('sha256').update(adminPassword).digest();
-    if (!timingSafeEqual(submittedHash, expectedHash)) {
+    if (!timingSafeEqual(submittedHash, adminCodeHash)) {
       sendJson(response, 401, { message: 'That admin password is incorrect.' });
       return;
     }

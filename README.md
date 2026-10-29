@@ -14,7 +14,7 @@ Open http://localhost:3000.
 
 ## Admin access
 
-Set a strong, private password when starting the server to enable owner sign-in and unlock Plus without a subscription:
+Admin sign-in unlocks Plus without a subscription. The server stores only a hash of the admin code, so the code itself is not in the repository. To use a different code, set `ADMIN_PASSWORD` when starting the server (it overrides the built-in one):
 
 ```sh
 ADMIN_PASSWORD='your-long-unique-password' npm start
