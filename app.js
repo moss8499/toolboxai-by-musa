@@ -310,7 +310,36 @@ async function loadAdminStatus() {
   adminEntry.hidden = !adminState.configured;
   isAdmin = Boolean(adminState.authenticated);
   adminEntry.textContent = isAdmin ? 'Admin · sign out' : 'Admin sign in';
-  if (isAdmin) setPremium(true);
+  if (isAdmin) {
+    setPremium(true);
+    return;
+  }
+  await restorePlus();
+}
+
+async function restorePlus() {
+  const sessionId = new URLSearchParams(window.location.search).get('session_id');
+  const savedId = localStorage.getItem('quidtools-subscription');
+  if (!sessionId && !savedId) return;
+  try {
+    const response = await fetch('/api/plus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sessionId ? { sessionId } : { subscriptionId: savedId })
+    });
+    const result = await response.json();
+    if (sessionId) window.history.replaceState({}, '', window.location.pathname);
+    if (response.ok && result.active) {
+      localStorage.setItem('quidtools-subscription', result.subscriptionId);
+      setPremium(true);
+      if (sessionId) setStatus('Thanks! Plus is unlocked.');
+      return;
+    }
+    if (response.status === 401) localStorage.removeItem('quidtools-subscription');
+    if (sessionId) setStatus(result.message);
+  } catch {
+    setStatus('Could not check membership status.');
+  }
 }
 
 document.querySelector('#admin-entry').addEventListener('click', async () => {

@@ -11,6 +11,8 @@ const adminCodeHash = process.env.ADMIN_PASSWORD
   ? createHash('sha256').update(process.env.ADMIN_PASSWORD).digest()
   : Buffer.from('2f4762a7e7844eefac1248f53e5a5f54eee905f8a750457c280d8c78bb7dcf8c', 'hex');
 const adminSessions = new Map();
+const stripeKey = process.env.STRIPE_SECRET_KEY || '';
+const plusProductId = process.env.STRIPE_PRODUCT_ID || 'prod_VX1vJgwoENQeeL';
 const adminSessionDuration = 12 * 60 * 60 * 1000;
 
 const mimeTypes = {
@@ -50,6 +52,16 @@ function sendJson(response, statusCode, payload, headers = {}) {
     ...headers
   });
   response.end(JSON.stringify(payload));
+}
+
+async function stripeGet(path) {
+  const response = await fetch(`https://api.stripe.com/v1/${path}`, { headers: { Authorization: `Bearer ${stripeKey}` } });
+  return response.ok ? response.json() : null;
+}
+
+function isActivePlus(subscription) {
+  return ['active', 'trialing'].includes(subscription?.status)
+    && subscription.items.data.some((item) => item.price.product === plusProductId);
 }
 
 const server = createServer(async (request, response) => {
@@ -102,6 +114,47 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, { authenticated: false }, {
       'Set-Cookie': 'quidtools_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0'
     });
+    return;
+  }
+
+  if (url.pathname === '/api/plus' && request.method === 'POST') {
+    if (!stripeKey) {
+      sendJson(response, 503, { message: 'Automatic Plus is not set up yet.' });
+      return;
+    }
+
+    let body;
+    try {
+      body = await readJsonBody(request);
+    } catch {
+      sendJson(response, 400, { message: 'Invalid request.' });
+      return;
+    }
+
+    const { sessionId, subscriptionId } = body;
+    const validSession = typeof sessionId === 'string' && /^cs_[A-Za-z0-9_]{10,200}$/.test(sessionId);
+    const validSubscription = typeof subscriptionId === 'string' && /^sub_[A-Za-z0-9_]{10,200}$/.test(subscriptionId);
+    if (!validSession && !validSubscription) {
+      sendJson(response, 400, { message: 'Invalid request.' });
+      return;
+    }
+
+    try {
+      let subscription;
+      if (validSession) {
+        const session = await stripeGet(`checkout/sessions/${sessionId}?expand[]=subscription`);
+        subscription = session?.status === 'complete' ? session.subscription : null;
+      } else {
+        subscription = await stripeGet(`subscriptions/${subscriptionId}`);
+      }
+      if (!isActivePlus(subscription)) {
+        sendJson(response, 401, { message: 'We could not find an active Plus subscription.' });
+        return;
+      }
+      sendJson(response, 200, { active: true, subscriptionId: subscription.id });
+    } catch {
+      sendJson(response, 502, { message: 'Membership check is temporarily unavailable.' });
+    }
     return;
   }
 
